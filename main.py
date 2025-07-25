@@ -2,8 +2,7 @@ import pygame, sys
 import pygame.locals as gameGlobals
 pygame.init()
 
-# Defining constant and useful .
-# variables
+# Defining constant and useful variables
 BLACK = (0,0,0)
 RED = (255,0,0)
 GREEN = (0,255,0)
@@ -14,6 +13,15 @@ DARKGREY = (40,40,40)
 LIGHTGREY = (200,200,200)
 LIGHTBLUE = (0,200,200)
 ORANGE = (255,165,0)
+TILE_SIZE = 30
+SPAWN_SIZE = 60
+PLAYER_SIZE = 30
+PLAYER_SPEED = 5
+PROJECTILE_SIZE = 15
+PROJECTILE_SPEED = 4
+PROJECTILE_OFFSET = 5
+FPS = 60
+TURRET_TIMER = 90
 clock = pygame.time.Clock()
 font = pygame.font.Font('freesansbold.ttf', 32)
 
@@ -317,8 +325,10 @@ levelMap7 = [
 '################U#########U#########U######'
 ]
 
-class player1():
-    def __init__(self, changeY = 0, changeX = 0, upKey = pygame.K_UP, downKey = pygame.K_DOWN, leftKey = pygame.K_LEFT, rightKey = pygame.K_RIGHT, shape = pygame.Rect(60, displayHeight - 60, 30, 30)):
+levels = [levelMap1, levelMap2, levelMap3, levelMap4, levelMap5, levelMap6, levelMap7]
+
+class player():
+    def __init__(self, changeY = 0, changeX = 0, upKey = pygame.K_UP, downKey = pygame.K_DOWN, leftKey = pygame.K_LEFT, rightKey = pygame.K_RIGHT, shape = pygame.Rect(60, displayHeight - 60, PLAYER_SIZE, PLAYER_SIZE)):
         self.changeY = changeY
         self.changeX = changeX
         self.upKey = upKey
@@ -332,27 +342,27 @@ class player1():
         # Changes direction based on key pushed
         if event.type == pygame.KEYDOWN:
             if event.key == self.downKey:
-                self.changeY = 5
+                self.changeY = PLAYER_SPEED
                 self.changeX = 0
             if event.key == self.upKey:
-                self.changeY = -5
+                self.changeY = -PLAYER_SPEED
                 self.changeX = 0
             if event.key == self.leftKey:
-                self.changeX = -5
+                self.changeX = -PLAYER_SPEED
                 self.changeY = 0
             if event.key == self.rightKey:
-                self.changeX = 5
+                self.changeX = PLAYER_SPEED
                 self.changeY = 0
         # Stops the player after key is released
         if event.type == pygame.KEYUP:
-            if event.key == self.downKey and self.changeY == 5:
-                self.changeY -= 5
-            if event.key == self.upKey and self.changeY == -5:
-                self.changeY += 5
-            if event.key == self.leftKey and self.changeX == -5:
-                self.changeX += 5
-            if event.key == self.rightKey and self.changeX == 5:
-                self.changeX -= 5
+            if event.key == self.downKey and self.changeY == PLAYER_SPEED:
+                self.changeY -= PLAYER_SPEED
+            if event.key == self.upKey and self.changeY == -PLAYER_SPEED:
+                self.changeY += PLAYER_SPEED
+            if event.key == self.leftKey and self.changeX == -PLAYER_SPEED:
+                self.changeX += PLAYER_SPEED
+            if event.key == self.rightKey and self.changeX == PLAYER_SPEED:
+                self.changeX -= PLAYER_SPEED
         
 
     def update(self, collideList, projectileList, spawnPoint):
@@ -409,7 +419,7 @@ class collision():
 
 #Stores the information on the turrets to shoot projectiles
 class turret(collision):
-    def __init__(self, x, y, shape, direction, projectileList = [], timer = 60):
+    def __init__(self, x, y, shape, direction, projectileList = [], timer = TURRET_TIMER):
         self.x = x 
         self.y = y
         self.shape = shape
@@ -425,14 +435,14 @@ class turret(collision):
         # Spawns a new projectile and chooses projectile trajectory based on turret direction 
         if self.timer == 0:
             if self.direction == 'left':
-                newProjectile = projectile(x = self.x, y = self.y, shape = pygame.Rect(self.x, self.y + 5, 15, 15), changeX = -4)
+                newProjectile = projectile(x = self.x, y = self.y, shape = pygame.Rect(self.x, self.y + PROJECTILE_OFFSET, PROJECTILE_SIZE, PROJECTILE_SIZE), changeX = -PROJECTILE_SPEED)
             elif self.direction == 'right':
-                newProjectile = projectile(x = self.x, y = self.y, shape = pygame.Rect(self.x, self.y + 5, 15, 15), changeX = 4)
+                newProjectile = projectile(x = self.x, y = self.y, shape = pygame.Rect(self.x, self.y + PROJECTILE_OFFSET, PROJECTILE_SIZE, PROJECTILE_SIZE), changeX = PROJECTILE_SPEED)
             elif self.direction == 'up':
-                newProjectile = projectile(x = self.x, y = self.y, shape = pygame.Rect(self.x + 5, self.y, 15, 15), changeY = -4)
+                newProjectile = projectile(x = self.x, y = self.y, shape = pygame.Rect(self.x + PROJECTILE_OFFSET, self.y, PROJECTILE_SIZE, PROJECTILE_SIZE), changeY = -PROJECTILE_SPEED)
             elif self.direction == 'down':
-                newProjectile = projectile(x = self.x, y = self.y, shape = pygame.Rect(self.x + 5, self.y, 15, 15), changeY = 4)
-            self.timer = 90
+                newProjectile = projectile(x = self.x, y = self.y, shape = pygame.Rect(self.x + PROJECTILE_OFFSET, self.y, PROJECTILE_SIZE, PROJECTILE_SIZE), changeY = PROJECTILE_SPEED)
+            self.timer = TURRET_TIMER
             return newProjectile
 
 
@@ -488,33 +498,33 @@ def levelGenerator(level):
     for i in range(len(level)):
         for j, levelProp in enumerate(level[i]):
             # Stores the position of the object based off the position of the string in the list
-            length = j * 30
-            width = i * 30
+            length = j * TILE_SIZE
+            width = i * TILE_SIZE
 
             # Creates an object based on the string
             if levelProp == '#':
-                prop = wall(shape = pygame.Rect(length, width, 30, 30))
+                prop = wall(shape = pygame.Rect(length, width, TILE_SIZE, TILE_SIZE))
                 objectList.append(prop)
             elif levelProp == 'S':
                 newSpawn = spawn(x = length, y = width)
                 objectList.append(newSpawn)
             elif levelProp == 'E':
-                endOfLevel = end(x = length, y = width, shape = pygame.Rect(length, width, 60, 60))
+                endOfLevel = end(x = length, y = width, shape = pygame.Rect(length, width, SPAWN_SIZE, SPAWN_SIZE))
                 objectList.append(endOfLevel)
             elif levelProp == 'W':
                 prop = spike(x = length, y = width, shape = pygame.Rect(length + 10, width + 15, 10, 10))
                 objectList.append(prop)
             elif levelProp == 'U':
-                prop = turret(x = length, y = width, shape = pygame.Rect(length, width, 30, 30), direction = 'up')
+                prop = turret(x = length, y = width, shape = pygame.Rect(length, width, TILE_SIZE, TILE_SIZE), direction = 'up')
                 objectList.append(prop)
             elif levelProp == 'D':
-                prop = turret(x = length, y = width, shape = pygame.Rect(length, width, 30, 30), direction = 'down')
+                prop = turret(x = length, y = width, shape = pygame.Rect(length, width, TILE_SIZE, TILE_SIZE), direction = 'down')
                 objectList.append(prop)
             elif levelProp == 'L':
-                prop = turret(x = length, y = width, shape = pygame.Rect(length, width, 30, 30), direction = 'left')
+                prop = turret(x = length, y = width, shape = pygame.Rect(length, width, TILE_SIZE, TILE_SIZE), direction = 'left')
                 objectList.append(prop)
             elif levelProp == 'R':
-                prop = turret(x = length, y = width, shape = pygame.Rect(length, width, 30, 30), direction = 'right')
+                prop = turret(x = length, y = width, shape = pygame.Rect(length, width, TILE_SIZE, TILE_SIZE), direction = 'right')
                 objectList.append(prop)
     
     # Returns list of objects
@@ -533,24 +543,23 @@ def levelSwapper(levelMap):
             spawnPoint = objects[i]
             break
     # Respawns the player and stops the player from moving
-    player1.shape.x = spawnPoint.x
-    player1.shape.y = spawnPoint.y  
-    player1.changeX =  0
-    player1.changeY = 0
+    player.shape.x = spawnPoint.x
+    player.shape.y = spawnPoint.y  
+    player.changeX =  0
+    player.changeY = 0
     return objects, spawnPoint
 
-player1 = player1()
+player = player()
 objects, spawnPoint = levelSwapper(levelMap1)
 projectileList = []
 
 # Stores which level the player is on
-whichLevel = 1
+whichLevel = 0
 text = 'Congratulations! You Win'
 
 
 while True:
-    # Sets the game at 60fps
-    clock.tick(60)
+    clock.tick(FPS)
     displaySurface.fill(DARKGREY)
 
     # True if the player has completed the game
@@ -570,7 +579,7 @@ while True:
             if isinstance(objects[i], wall):
                 pygame.draw.rect(displaySurface, LIGHTGREY, objects[i].shape)
             elif isinstance(objects[i], spawn):
-                pygame.draw.rect(displaySurface, GREEN, pygame.Rect(objects[i].x, objects[i].y, 60, 60))
+                pygame.draw.rect(displaySurface, GREEN, pygame.Rect(objects[i].x, objects[i].y, SPAWN_SIZE, SPAWN_SIZE))
             elif isinstance(objects[i], end):
                 pygame.draw.rect(displaySurface, LIGHTBLUE, objects[i].shape)
             elif isinstance(objects[i], spike):
@@ -586,7 +595,7 @@ while True:
             pygame.draw.ellipse(displaySurface, ORANGE, projectileList[i].shape)
 
         # Draws the player
-        pygame.draw.rect(displaySurface, BLUE, player1.shape)
+        pygame.draw.rect(displaySurface, BLUE, player.shape)
         pygame.display.update()
 
     
@@ -594,10 +603,10 @@ while True:
             if event.type == gameGlobals.QUIT:
                 pygame.quit()
                 sys.exit()
-            player1.move()
+            player.move()
         
         # Updates player and determines whether the level is completed
-        changeLevel = player1.update(objects, projectileList, spawnPoint)
+        changeLevel = player.update(objects, projectileList, spawnPoint)
 
         # Updates every projectile on screen
         for i in range(len(projectileList)):
@@ -611,19 +620,9 @@ while True:
                     break
         
         # Swaps the level if it has been completed
-        if changeLevel == True:
+        if changeLevel:
+            # Switches and resets the level
             whichLevel += 1
             projectileList = []
-            if whichLevel == 2:
-                objects, spawnPoint = levelSwapper(levelMap2)
-            elif whichLevel == 3:
-                objects, spawnPoint = levelSwapper(levelMap3)
-            elif whichLevel == 4:
-                objects, spawnPoint = levelSwapper(levelMap4)
-            elif whichLevel == 5:
-                objects, spawnPoint = levelSwapper(levelMap5)
-            elif whichLevel == 6:
-                objects, spawnPoint = levelSwapper(levelMap6)
-            elif whichLevel == 7:
-                objects, spawnPoint = levelSwapper(levelMap7)
+            objects, spawnPoint = levelSwapper(levels[whichLevel])
             changeLevel = False
